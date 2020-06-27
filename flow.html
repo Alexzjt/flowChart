@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3绘制流程图</title>
+    <style>
+		 g.style-red>rect,g.style-red>polygon{
+		    fill: red;
+			stroke:#000;
+			stroke-width:2px
+		 }
+		 g.style-default>rect,g.style-default>polygon{
+		    fill:#fff;
+			stroke:#000;
+			stroke-width:2px
+		 }
+		 g.style-yellow>rect,g.style-yellow>polygon {
+			 stroke:#000;
+			 stroke-width:2px;
+		    fill: yellow;
+		 }
+		 g.style-red text{
+			 fill:#fff
+		 }
+		 g.style-yellow text{
+			 fill:#000
+		 }
+		 g.style-default text{
+			 fill:#000
+		 }
+        .tooltip {
+            position: absolute;
+            font-size: 12px;
+            text-align: center;
+            background-color: white;
+            border-radius: 3px;
+            box-shadow: rgb(174, 174, 174) 0px 0px 10px;
+            cursor: pointer;
+            display: inline-block;
+            padding:10px;
+        }
+
+        .tooltip>div {
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <svg width="1200" height="600"></svg>
+	<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://dagrejs.github.io/project/dagre-d3/latest/dagre-d3.min.js"></script>
+    <script>
+        let dataset = {
+            nodes: [{
+                    id: 0,
+                    label: "商品",
+                    shape: "rect",
+					class: 'style-red'
+                },
+                {
+                    id: 1,
+                    label: "购物车",
+                    shape: "rect",
+					class: 'style-default'
+                },
+                {
+                    id: 2,
+                    label: "注册",
+                    shape: "rect",
+					class: 'style-yellow'
+                },
+                {
+                    id: 3,
+                    label: "提交订单",
+                    shape: "rect",
+					class: 'style-yellow'
+                },
+                {
+                    id: 4,
+                    label: "生成订单",
+                    shape: "diamond",
+					class: 'style-default'
+                },
+                {
+                    id: 5,
+                    label: "在线支付",
+                    shape: "diamond",
+					class: 'style-default'
+                },
+				{
+				    id: 6,
+				    label: "货到付款",
+				    shape: "rect",
+					class: 'style-default'
+				},
+				{
+				    id: 7,
+				    label: "发货单",
+				    shape: "rect",
+					class: 'style-default'
+				},
+				{
+				    id: 8,
+				    label: "物流进度",
+				    shape: "rect",
+					class: 'style-default'
+				},
+				{
+				    id: 9,
+				    label: "待支付订单",
+				    shape: "rect",
+					class: 'style-default'
+				},
+				{
+				    id: 10,
+				    label: "订单完成",
+				    shape: "rect",
+					class: 'style-default'
+				},
+				{
+				    id: 11,
+				    label: "退换货流程",
+				    shape: "rect",
+					class: 'style-default'
+				},
+            ],
+            edges: [{
+                    source: 0,
+                    target: 1,
+                    label: "会员直接加入"
+                },
+                {
+                    source: 0,
+                    target: 2,
+                    label: "非会员注册"
+                },
+                {
+                    source: 2,
+                    target: 1,
+                    label: "注册成功"
+                },
+                {
+                    source: 1,
+                    target: 3,
+                    label: ""
+                },
+                {
+                    source: 3,
+                    target: 4,
+                    label: ""
+                },
+                {
+                    source: 4,
+                    target: 5,
+                    label: ""
+                },
+				{
+				    source: 4,
+				    target: 6,
+				    label: ""
+				},
+				{
+				    source: 6,
+				    target: 7,
+				    label: ""
+				},
+				{
+				    source: 7,
+				    target: 8,
+				    label: "发货"
+				},
+				{
+					source: 5,
+					target: 7,
+					label: "支付成功"
+				},
+				{
+					source: 5,
+					target: 9,
+					label: "支付失败"
+				},
+				{
+					source: 9,
+					target: 4,
+					label: "重新提交订单"
+				},
+				{
+					source: 8,
+					target: 10,
+					label: "确认收货"
+				},
+				{
+					source: 10,
+					target: 11,
+					label: "申请退换货"
+				},
+            ]
+        }
+        // 创建 graph 对象
+        let g = new dagreD3.graphlib.Graph();
+        g.setGraph({
+            rankdir: 'TB',
+            align: 'DL',
+            nodesep: 50,
+            edgesep: 40,
+            ranksep:20,
+            marginx: 50,
+            marginy: 20,
+			ranker:'network-simplex'
+        });
+		//创造点
+        dataset.nodes.forEach(item => {
+            g.setNode(item.id, {
+                //节点标签
+                label: item.label,
+                //节点形状
+                shape: item.shape,
+				class:item.class,
+				num:item.id
+            })
+        })
+		//创造线
+        dataset.edges.forEach(item => {
+            g.setEdge(item.source, item.target, {
+                //边标签
+                label: item.label,
+				//曲线
+				curve: d3.curveBasis,
+                //边样式
+                style: "fill:#fff;stroke:#000;stroke-width:2px",
+                labelStyle: "fill:red",
+                arrowhead: "vee",
+                arrowheadStyle: "fill:#000",
+            })
+        })
+		var render = new dagreD3.render();// 创建渲染器
+		var svg = d3.select("svg"); //声明节点
+		svg.select("g").remove(); //删除以前的节点，清空画面
+		var svgGroup = svg.append("g");//添加一个g元素作为绘图容器
+		var inner = svg.select("g");
+		render(inner, g); //在绘图容器上运行渲染器生成流程图
+		var zoom = d3.zoom().scaleExtent([0.2, 2]).on("zoom", function () { //添加鼠标滚轮放大缩小事件
+		  inner.attr("transform", d3.event.transform);
+		});
+		svg.call(zoom);
+		let svgHeight =window.innerHeight ;
+		let svgWidth = window.innerWidth ;
+		//设置svg容器宽高为浏览器宽高
+		svg.attr('height', svgHeight)
+			.attr('width', svgWidth)
+		var initialScale = (svg.attr('height') > g.graph().height) ? 0.75 : (svg.attr('height') / g.graph().height); //initialScale元素放大倍数
+		var tWidth = (svg.attr('width')  - g.graph().width * initialScale) / 2; //水平居中
+		var tHeight = (svg.attr('height')  - g.graph().height * initialScale) / 2; //垂直居中
+		inner.style('opacity', 0)
+			.transition()
+			.duration(1000)
+			.attr("transform", "translate("+ tWidth +","+tHeight+") scale("+initialScale+")")
+			.style('opacity', 1);
+		setTimeout(()=>{
+			svg.call(zoom.transform,d3.zoomIdentity.translate(tWidth, tHeight).scale(initialScale))
+		},1000)		
+		//提示框的样式							
+        var styleTooltip = function (name) {
+            return "<p class='name'>" + name + "</p>";
+        };
+
+        //创建提示框
+        function createTooltip() {
+            return d3.select('body')
+					.append('div')
+					.classed('tooltip', true)
+					.style('opacity', 0)
+					.style('display', 'none');
+        };
+        let tooltip = createTooltip();
+        //tooltip显示
+        function tipVisible(textContent) {
+            tooltip.transition()
+                .duration(400)
+                .style('opacity', 0.9)
+                .style('display', 'block');
+            tooltip.html(textContent)
+                .style('left', (d3.event.pageX + 15) + 'px')
+                .style('top', (d3.event.pageY + 15) + 'px');
+        }
+        //tooltip隐藏
+        function tipHidden() {
+            tooltip.transition()
+                .duration(400)
+                .style('opacity', 0)
+                .style('display', 'none');
+        }
+
+        //鼠标悬停显示隐藏tooltip
+        svgGroup.selectAll("g.node")
+        .on("mouseover", function (v) {
+            tipVisible(g.node(v).label);
+        })
+        .on("mouseout", function (v) {
+            tipHidden();
+        })
+		//元素拖拽
+		var drag = d3.drag().on("start", dragstarted)
+				  .on("drag", dragged)
+				  .on("end", dragended);
+		//取消svg双击放大事件
+		svg.on("dblclick.zoom", null);
+		//点击加粗和拖拽元素功能
+		svgGroup.selectAll("g.node").on("click",function(v){
+		    //单击时让指向线加粗
+			svgGroup.selectAll("g.edgePath path").style("stroke-width",function(line){	
+				if(line.v==g.node(v).num){//当与连接点连接时变粗
+					return 3;
+				}else{
+					return 2;
+				}
+			});
+			d3.selectAll("g.node>:first-child").style('stroke-width',2);
+			//被选中元素加边框变色
+		    d3.select(this.firstElementChild).style('stroke-width',4);
+		}).call(drag)       
+		 function getTranslate(transform) {
+		     var arr = transform.substring(transform.indexOf("(")+1, transform.indexOf(")")).split(",");
+		     return [+arr[0], +arr[1]];
+		 }
+		 var dx = 0;
+		 var dy = 0;
+		 var dragElem = null;
+		 //开始拖拽的位置
+		 function dragstarted(v) {
+		     var transform = d3.select(this).attr("transform");
+		     var translate = getTranslate(transform);
+		     dx = d3.event.x - translate[0];
+		     dy = d3.event.y - translate[1];
+		     dragElem = d3.select(this);
+		 }
+		 //拖拽时位移
+		 function dragged(v) {
+		   dragElem.attr("transform", "translate(" + (d3.event.x - dx) + ", " + (d3.event.y - dy) + ")");
+		   updateCable(dragElem,v);
+		 }
+		 //拖拽结束
+		 function dragended() {
+		     dx = dy = 0;
+		     dragElem = null;
+		 }
+		 //重新画图
+		 function updateCable(elem,num) {
+		     var bound = elem.node().getBoundingClientRect();
+		     var width = bound.width;
+		     var height = bound.height;
+		     var transform = elem.attr("transform");
+		     var t1 = getTranslate(transform);
+		 }
+    </script>
+</body>
+
+</html>
